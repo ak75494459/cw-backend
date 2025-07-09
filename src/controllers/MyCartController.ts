@@ -97,4 +97,59 @@ const deleteCartItem = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-export default { createOrUpdateCart, getCartData, deleteCartItem };
+const changeCartItemQuantity = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const userId = req.userId; // ✅ Extracted by jwtParse middleware
+    const { productId, size, quantity } = req.body;
+
+    // 🔒 Validate
+    if (!productId || !size || typeof quantity !== "number") {
+      return res
+        .status(400)
+        .json({ message: "Product ID, size, and quantity are required" });
+    }
+
+    if (quantity < 1) {
+      return res.status(400).json({ message: "Quantity must be at least 1" });
+    }
+
+    // ✅ Find cart
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // ✅ Update matching item quantity
+    const item = cart.items.find(
+      (item) => item.product.toString() === productId && item.size === size
+    );
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found in cart" });
+    }
+
+    item.quantity = quantity; // ✅ Set new quantity
+
+    await cart.save(); // ✅ Persist changes
+
+    await cart.populate("items.product"); // Optional: for frontend rendering
+
+    return res.status(200).json({
+      message: "Quantity updated",
+      cart,
+    });
+  } catch (error) {
+    console.error("Error updating cart item quantity:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export default {
+  createOrUpdateCart,
+  getCartData,
+  deleteCartItem,
+  changeCartItemQuantity,
+};
