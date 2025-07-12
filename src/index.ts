@@ -2,10 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import mongoose from "mongoose";
-import Razorpay from "razorpay";
 import { v2 as cloudinary } from "cloudinary";
-import { Request, Response } from "express";
-import crypto from "crypto";
 
 import MyUserRoute from "./routes/MyUserRoutes";
 import ProductRoutes from "./routes/ProductRoutes";
@@ -13,6 +10,7 @@ import MyCartRoutes from "./routes/MyCartRoutes";
 import MyAddressRoutes from "./routes/MyAddressRoutes";
 import QueryRoutes from "./routes/QueryRoutes";
 import RazorpayRoutes from "./routes/RazorpayRotutes";
+import MyOrderRoutes from "./routes/MyOrderRoutes";
 
 // ✅ Connect to MongoDB
 mongoose
@@ -37,6 +35,7 @@ app.use("/api/products", ProductRoutes);
 app.use("/api/cart", MyCartRoutes);
 app.use("/api/my/address", MyAddressRoutes);
 app.use("/api/my/query", QueryRoutes);
+app.use("/api/my/order", MyOrderRoutes);
 app.use("/order", RazorpayRoutes);
 
 // ✅ Start Server
