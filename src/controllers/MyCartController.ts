@@ -147,9 +147,24 @@ const changeCartItemQuantity = async (
   }
 };
 
+const deleteEntireCart = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId = req.userId;
+
+    // ✅ Remove the entire cart document for this user
+    await Cart.findOneAndDelete({ user: userId });
+
+    return res.status(200).json({ message: "Cart cleared successfully" });
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    return res.status(500).json({ message: "Failed to clear cart" });
+  }
+};
+
 export default {
   createOrUpdateCart,
   getCartData,
   deleteCartItem,
   changeCartItemQuantity,
+  deleteEntireCart,
 };

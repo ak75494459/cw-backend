@@ -56,4 +56,28 @@ const createOrder = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-export default { createOrder };
+const getMyOrders = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId = req.userId as string | Types.ObjectId;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized. User ID missing." });
+    }
+
+    const orders = await Order.find({ user: userId })
+      .populate(
+        "items.product",
+        "productName price discount productImages brand"
+      )
+      .sort({ createdAt: -1 });
+
+    return res.json({ orders });
+  } catch (error) {
+    console.error("❌ Error fetching orders:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export default { createOrder, getMyOrders };

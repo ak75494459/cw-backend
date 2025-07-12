@@ -5,5 +5,6 @@ import MyOrderController from "../controllers/MyOrderController";
 const router = Router();
 
 router.post("/", jwtCheck, jwtParse, MyOrderController.createOrder);
+router.get("/details", jwtCheck, jwtParse, MyOrderController.getMyOrders);
 
 export default router;
