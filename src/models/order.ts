@@ -88,7 +88,16 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Pending", "Paid", "Shipped", "Delivered", "Cancelled"],
+      enum: [
+        "Pending",
+        "Ordered",
+        "Shipped",
+        "Delivered",
+        "Cancelled",
+        "Return",
+        "Returned",
+        "Refunded",
+      ],
       default: "Pending",
     },
 
@@ -96,6 +105,11 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["Prepaid", "Cash on Delivery"],
+      required: true,
     },
 
     paymentDetails: paymentDetailsSchema, // ✅ Razorpay payment info

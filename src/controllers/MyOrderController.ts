@@ -15,7 +15,13 @@ const createOrder = async (req: Request, res: Response): Promise<any> => {
         .json({ message: "Unauthorized. User ID missing." });
     }
 
-    const { items, shippingAddress, totalAmount, paymentDetails } = req.body;
+    const {
+      items,
+      shippingAddress,
+      totalAmount,
+      paymentDetails,
+      paymentMethod,
+    } = req.body;
 
     // ✅ Validation
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -40,7 +46,8 @@ const createOrder = async (req: Request, res: Response): Promise<any> => {
       items,
       shippingAddress,
       totalAmount,
-      status: paymentDetails ? "Paid" : "Pending",
+      status: paymentDetails ? "Ordered" : "Pending",
+      paymentMethod,
       paymentDetails: paymentDetails || undefined,
     });
 
@@ -80,4 +87,96 @@ const getMyOrders = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-export default { createOrder, getMyOrders };
+/**
+ * ✅ Cancel an order using req.body.orderId and req.userId
+ */
+/**
+ * ✅ Cancel an order using req.body.orderId and req.userId
+ */
+const updateOrderStatus = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId = req.userId as Types.ObjectId | string;
+    const { orderId, action } = req.body; // 'cancel' | 'return'
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized. User ID missing." });
+    }
+
+    if (!orderId || !Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ message: "Invalid or missing orderId." });
+    }
+
+    if (!["cancel", "return"].includes(action)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid action. Must be 'cancel' or 'return'." });
+    }
+
+    const order = await Order.findOne({ _id: orderId, user: userId });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    // 🛑 Validation checks
+    if (action === "cancel") {
+      if (order.status === "Cancelled") {
+        return res.status(400).json({ message: "Order is already cancelled." });
+      }
+
+      if (["Return", "Returned"].includes(order.status)) {
+        return res.status(400).json({
+          message: "Cannot cancel a returned or return-in-progress order.",
+        });
+      }
+
+      if (["Delivered", "Shipped", "Refunded"].includes(order.status)) {
+        return res.status(400).json({
+          message: `Cannot cancel a ${order.status.toLowerCase()} order.`,
+        });
+      }
+    }
+
+    if (action === "return") {
+      if (["Return", "Returned"].includes(order.status)) {
+        return res
+          .status(400)
+          .json({ message: "Order is already returned or in return process." });
+      }
+
+      if (order.status === "Cancelled") {
+        return res
+          .status(400)
+          .json({ message: "Cannot return a cancelled order." });
+      }
+
+      if (order.status !== "Delivered") {
+        return res
+          .status(400)
+          .json({ message: "Can only return a delivered order." });
+      }
+    }
+
+    const newStatus = action === "cancel" ? "Cancelled" : "Return";
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: orderId, user: userId },
+      { status: newStatus },
+      { new: true, runValidators: false }
+    );
+
+    return res.json({
+      message: `✅ Order ${
+        action === "cancel" ? "cancelled" : "marked for return"
+      } successfully.`,
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("❌ Error updating order:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export default { createOrder, getMyOrders, updateOrderStatus };
