@@ -18,8 +18,8 @@ const productSchema = new mongoose.Schema({
   },
   sizes: {
     type: [String], // e.g., ["S", "M", "L", "XL"]
-    required: true,
   },
+
   colors: {
     type: [String], // e.g., ["Red", "Blue", "Black"]
     default: [],
